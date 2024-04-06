@@ -1,0 +1,89 @@
+<form method="post" id="cad-usuario-form" enctype="multipart/form-data" action="">
+          
+                  
+          <?php
+          if (isset($_POST['acao'])) {
+              $login = $_POST['cademail'];
+
+              $nome = $_POST['cadnome'];
+              $senha = $_POST['cadsenha'];
+              $senhaConfi = $_POST['Confirmarsenha'];
+              $tele = $_POST['telefone'];
+              $imagem = $_FILES['imagem'];
+              $cargo = '0';
+
+              if ($login == '') {
+                  Painel::alert('erro', 'O login está vázio!');
+              } elseif ($nome == '') {
+                  Painel::alert('erro', 'O nome está vázio!');
+              } elseif ($senha == '') {
+                  Painel::alert('erro', 'A senha está vázia!');
+              } elseif ($cargo == '') {
+                  Painel::alert('erro', 'O cargo precisa estar selecionado!');
+              }// else if($senha == $senhaConfi){
+              // Painel::alert('erro','confirme a senha e tente denovo');
+              elseif ($imagem['name'] == '') {
+                  Painel::alert('erro', 'A imagem precisa estar selecionada!');
+              } else {
+                  // Podemos cadastrar!
+                  if (Painel::imagemValida($imagem) == false) {
+                      Painel::alert('erro', 'O formato especificado não está correto!');
+                  } elseif (Usuario::userExists($login)) {
+                      Painel::alert('erro', 'O login já existe, selecione outro por favor!');
+                  } else {
+                      // Apenas cadastrar no banco de dados!
+
+                      $usuario = new Usuario();
+                      $imagem = Painel::uploadFile($imagem);
+                      $usuario->cadastrarUsuario($login, $senha, $imagem, $nome, $cargo, $tele);
+                      $sql = MySql::conectar()->prepare('SELECT * FROM `tb_usuarios_login` WHERE email = ? AND senha = ?');
+                      $sql->execute([$login, $senha]);
+                      $info = $sql->fetch();
+                      // Logamos com sucesso.
+                      $_SESSION['id'] = $info['id'];
+                      Painel::redirect(INCLUD_PATH.'cadastreSe');
+                  }
+              }
+          }
+
+?>
+         <div class="input-group">
+             <label for="nome"> Nome Completo</label>
+             <input name="cadnome" type="text" id="nome" placeholder="Digite o seu nome completo" required>
+         </div>
+
+         <div class="input-group">
+             <label for="email">E-mail</label>
+             <input name="cademail" type="email" id="email" placeholder="Digite o seu email" required>
+         </div>
+
+         <div class="input-group">
+             <label for="telefone">telefone</label>
+             <input name="telefone" type="tel" id="email" placeholder="Digite o seu telefone" required>
+         </div>
+
+         <div class="input-group w50">
+             <label for="senha">Senha</label>
+             <input name="cadsenha" type="password" id="senha" placeholder="Digite sua senha" required>
+         </div>
+
+         <div class="input-group w50">
+             <label for="Confirmarsenha">Confirmar Senha</label>
+             <input name="Confirmarsenha" type="password" id="Confirmarsenha" placeholder="Confirme a senha" required>
+         </div>
+
+         <div class="input-group w50">
+         <div class="labelIn">
+             <label for="image_uploads"><p>imagem de perfil</p></label>
+             <input type="file" id="image_uploads" name="imagem" accept=".jpg, .jpeg, .png" multiple />
+         </div>
+         <div class="preview">
+             <p>selecione uma imagem</p>
+         </div>
+         </div>
+
+         <div class="input-group">
+             <button id="cad-usuario-btn" name="acao">Cadastrar</button>
+         </div>
+
+     </form>
